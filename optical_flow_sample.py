@@ -34,7 +34,7 @@ class App:
                 cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
 
             # 次のフレームがない時は無限ループから抜ける
-            if _ret == False:
+            if frame is None:
                 break
 
             frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
