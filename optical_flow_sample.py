@@ -4,11 +4,9 @@ from __future__ import print_function
 import numpy as np
 import cv2 as cv
 
-# from common import anorm2, draw_str
-
-lk_params = dict( winSize  = (15, 15),
-                  maxLevel = 2,
-                  criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03))
+lk_params = dict(winSize  = (15, 15),
+                 maxLevel = 2,
+                 criteria = (cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.03))
 
 feature_params = dict( maxCorners = 500,
                        qualityLevel = 0.3,
@@ -21,16 +19,17 @@ class App:
         self.detect_interval = 5
         self.tracks = []
         self.cap= cv.VideoCapture(video_src)
+        self.frame_widht= self.cap.get(cv.CAP_PROP_FRAME_WIDTH)
         self.frame_idx = 0
         self.movement_distance = 0
-        self.movement_amaunt = []
+        self.movement_distance_per_frame = []
 
     def run(self):
         while (True):
             _ret, frame = self.cap.read()
 
             if self.frame_idx == 0:
-                self.movement_amaunt.append([self.frame_idx, 0])
+                self.movement_distance_per_frame.append([self.frame_idx, 0])
                 cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
 
             # 次のフレームがない時は無限ループから抜ける
@@ -59,13 +58,10 @@ class App:
                     # pythonは参照渡し
                     if not good_flag:
                         continue
-                    # print(x0, y0, x1, y1)
                     tr.append((x1, y1))
                     if len(tr) > self.track_len:
                         # 0番目の要素の削除
                         del tr[0]
-                    # print("#")
-                    # print(len(tr))
                     new_tracks.append(tr)
                     cv.circle(vis, (x1, y1), 5, (0, 255, 0), -1)
                     cv.circle(vis, (x0, y0), 5, (255, 255, 255), -1)
@@ -73,14 +69,13 @@ class App:
                     dist_list.append(np.sqrt((x0-x1)**2 + (y0-y1)**2))
 
                 if len(dist_list) > 0:
-                    # print(sum(dist_list)/ len(dist_list))
                     self.movement_distance += sum(dist_list)/ len(dist_list)
-                    self.movement_amaunt.append([self.frame_idx, sum(dist_list)/ len(dist_list)])
-                    if self.movement_distance > 1080:
+                    self.movement_distance_per_frame.append([self.frame_idx, sum(dist_list)/ len(dist_list)])
+                    if self.movement_distance > self.frame_widht:
                         self.movement_distance = 0
                         cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
                 else:
-                    self.movement_amaunt.append([self.frame_idx, 0])
+                    self.movement_distance_per_frame.append([self.frame_idx, 0])
 
                 self.tracks = new_tracks
                 # 特徴点から現在のフレームまでの追跡の軌跡を描写
@@ -94,7 +89,6 @@ class App:
                 mask[:] = 255
                 for x, y in [np.int32(tr[-1]) for tr in self.tracks]:
                     cv.circle(mask, (x, y), 5, 0, -1)
-                # cv.imwrite('Features_' + str(self.frame_idx).zfill(6) + '.jpg', mask)
                 # コーナー検出
                 p = cv.goodFeaturesToTrack(frame_gray, mask = mask, **feature_params)
                 if p is not None:
@@ -103,6 +97,7 @@ class App:
 
             self.frame_idx += 1
             self.prev_gray = frame_gray
+            cv.namedWindow('lk_track', cv.WINDOW_NORMAL)
             cv.imshow('lk_track', vis)
 
             if self.frame_idx < 25:
@@ -111,8 +106,7 @@ class App:
             ch = cv.waitKey(1)
             if ch == 27:
                 break
-        print(self.movement_amaunt)
-        return self.movement_amaunt
+        return self.movement_distance_per_frame
 
 def main():
     print('Start')
