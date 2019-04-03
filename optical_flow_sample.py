@@ -24,7 +24,8 @@ class App:
         self.movement_distance = 0
         self.movement_distance_per_frame = []
 
-    def run(self):
+    # フレームごとの移動距離を求め、リストで返す
+    def calc_movement_distance(self):
         while (True):
             _ret, frame = self.cap.read()
 
@@ -52,7 +53,7 @@ class App:
                 good = d < 1
 
                 new_tracks = []
-                # 各フレームの移動量を求める
+                # 各フレームごとに移動量を求める
                 dist_list = []
                 for tr, (x0, y0), (x1, y1), good_flag in zip(self.tracks, p0.reshape(-1, 2), p1.reshape(-1, 2), good):
                     # pythonは参照渡し
@@ -70,12 +71,12 @@ class App:
 
                 if len(dist_list) > 0:
                     self.movement_distance += sum(dist_list)/ len(dist_list)
-                    self.movement_distance_per_frame.append([self.frame_idx, sum(dist_list)/ len(dist_list)])
+                    self.movement_distance_per_frame.append(dist_list)
                     if self.movement_distance > self.frame_widht:
                         self.movement_distance = 0
                         cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
                 else:
-                    self.movement_distance_per_frame.append([self.frame_idx, 0])
+                    self.movement_distance_per_frame.append(dist_list)
 
                 self.tracks = new_tracks
                 # 特徴点から現在のフレームまでの追跡の軌跡を描写
@@ -100,9 +101,6 @@ class App:
             cv.namedWindow('lk_track', cv.WINDOW_NORMAL)
             cv.imshow('lk_track', vis)
 
-            if self.frame_idx < 25:
-                cv.imwrite(str(self.frame_idx) + '.jpg', vis)
-
             ch = cv.waitKey(1)
             if ch == 27:
                 break
@@ -116,7 +114,7 @@ def main():
     except:
         video_src = 0
 
-    App(video_src).run()
+    movement_distance_per_frame = App(video_src).calc_movement_distance()
     print('Done')
 
 
