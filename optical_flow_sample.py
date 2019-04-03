@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import numpy as np
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 lk_params = dict(winSize  = (15, 15),
                  maxLevel = 2,
@@ -106,6 +107,19 @@ class App:
                 break
         return self.movement_distance_per_frame
 
+    # フレームごとの移動距離を可視化する
+    def show_movement_distance_per_frame(self):
+        x = []
+        y = []
+        for i, distance_list in enumerate(self.movement_distance_per_frame):
+            for distance in distance_list:
+                x.append(i)
+                y.append(distance)
+        plt.scatter(x, y)
+        plt.xlabel('frame index')
+        plt.xlabel('movement distance')
+        plt.savefig('figure.png')
+
 def main():
     print('Start')
     import sys
@@ -114,7 +128,10 @@ def main():
     except:
         video_src = 0
 
-    movement_distance_per_frame = App(video_src).calc_movement_distance()
+    app = App(video_src)
+    movement_distance_per_frame = app.calc_movement_distance()
+    app.show_movement_distance_per_frame()
+
     print('Done')
 
 
