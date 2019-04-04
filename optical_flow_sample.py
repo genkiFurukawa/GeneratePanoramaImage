@@ -20,12 +20,13 @@ class App:
         self.track_len = 10
         self.detect_interval = 5
         self.tracks = []
-        self.cap= cv.VideoCapture(video_src)
-        self.frame_widht= self.cap.get(cv.CAP_PROP_FRAME_WIDTH)
+        self.cap = cv.VideoCapture(video_src)
+        self.frame_widht = self.cap.get(cv.CAP_PROP_FRAME_WIDTH)
         self.frame_idx = 0
         self.movement_distance = 0
         self.movement_distance_per_frame = []
         self.mean_movement_distance_per_frame = []
+        self.cut_frame_idx_list = []
 
     # フレームごとの移動距離を求め、リストで返す
     def calc_movement_distance(self):
@@ -141,6 +142,14 @@ class App:
                 self.mean_movement_distance_per_frame.append(0)
     
     # 切りだすフレームのインデックスを求める処理
+    search_cut_frame_idx(self):
+        sum_movement_distance = 0
+        for i, d in enum(self.mean_movement_distance_per_frame):
+            sum_movement_distance += d
+            if i == 0:
+                self.cut_frame_idx_list.append(0)
+            if sum_movement_distance > self.frame_widht:
+                self.cut_frame_idx_list.append(i)
 
     # 切り出した画像を結合する処理
 
@@ -156,6 +165,7 @@ def main():
     movement_distance_per_frame = app.calc_movement_distance()
     app.show_movement_distance_per_frame()
     app.outlier_iqr()
+    app.search_cut_frame_idx()
     print('Done')
 
 
