@@ -32,11 +32,6 @@ class App:
     def calc_movement_distance(self):
         while (True):
             _ret, frame = self.cap.read()
-
-            if self.frame_idx == 0:
-                self.movement_distance_per_frame.append([self.frame_idx, 0])
-                cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
-
             # 次のフレームがない時は無限ループから抜ける
             if frame is None:
                 break
@@ -74,11 +69,7 @@ class App:
                     dist_list.append(np.sqrt((x0-x1)**2 + (y0-y1)**2))
 
                 if len(dist_list) > 0:
-                    self.movement_distance += sum(dist_list)/ len(dist_list)
                     self.movement_distance_per_frame.append(dist_list)
-                    if self.movement_distance > self.frame_widht:
-                        self.movement_distance = 0
-                        cv.imwrite('img_' + str(self.frame_idx) + '.jpg', frame)
                 else:
                     self.movement_distance_per_frame.append(dist_list)
 
@@ -142,16 +133,27 @@ class App:
                 self.mean_movement_distance_per_frame.append(0)
     
     # 切りだすフレームのインデックスを求める処理
-    search_cut_frame_idx(self):
+    def search_cut_frame_idx(self):
         sum_movement_distance = 0
-        for i, d in enum(self.mean_movement_distance_per_frame):
+        for i, d in enumerate(self.mean_movement_distance_per_frame):
             sum_movement_distance += d
             if i == 0:
                 self.cut_frame_idx_list.append(0)
             if sum_movement_distance > self.frame_widht:
                 self.cut_frame_idx_list.append(i)
+                sum_movement_distance = 0
 
     # 切り出した画像を結合する処理
+    def cut_image_from_video(self):
+        cut_image_number = 0
+        file_name = 'img_%5d.jpg'
+        for frame_idx in self.cut_frame_idx_list:
+            self.cap.set(cv.CAP_PROP_POS_FRAMES, frame_idx)
+            _ret, frame = self.cap.read()
+            if frame is not None:
+                cv.imwrite('img_' + str(cut_image_number).zfill(5) + '.jpg', frame)
+            cut_image_number += 1
+        self.cap.release()
 
 def main():
     print('Start')
@@ -166,6 +168,7 @@ def main():
     app.show_movement_distance_per_frame()
     app.outlier_iqr()
     app.search_cut_frame_idx()
+    app.cut_image_from_video()
     print('Done')
 
 
