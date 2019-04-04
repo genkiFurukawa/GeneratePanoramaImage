@@ -134,13 +134,15 @@ class App:
     # 切りだすフレームのインデックスを求める処理
     def search_cut_frame_idx(self):
         sum_movement_distance = 0
+        self.cut_frame_idx_list.append(0)
         for i, d in enumerate(self.mean_movement_distance_per_frame):
             sum_movement_distance += d
-            if i == 0:
-                self.cut_frame_idx_list.append(0)
             if sum_movement_distance > self.frame_widht:
                 self.cut_frame_idx_list.append(i)
                 sum_movement_distance = 0
+        # ToDo:最後のあまり部分だけ書き出す処理が必要そう
+        if sum_movement_distance > 0:
+            self.cut_frame_idx_list.append(len(self.mean_movement_distance_per_frame))
 
     # 切り出した画像を結合する処理
     def cut_image_from_video(self):
