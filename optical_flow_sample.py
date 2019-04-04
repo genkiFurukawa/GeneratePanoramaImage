@@ -23,7 +23,6 @@ class App:
         self.cap = cv.VideoCapture(video_src)
         self.frame_widht = self.cap.get(cv.CAP_PROP_FRAME_WIDTH)
         self.frame_idx = 0
-        self.movement_distance = 0
         self.movement_distance_per_frame = []
         self.mean_movement_distance_per_frame = []
         self.cut_frame_idx_list = []
