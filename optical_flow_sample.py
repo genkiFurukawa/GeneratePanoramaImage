@@ -4,6 +4,7 @@ from __future__ import print_function
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
+import pandas as pd
 
 lk_params = dict(winSize  = (15, 15),
                  maxLevel = 2,
@@ -24,6 +25,7 @@ class App:
         self.frame_idx = 0
         self.movement_distance = 0
         self.movement_distance_per_frame = []
+        self.mean_movement_distance_per_frame = []
 
     # フレームごとの移動距離を求め、リストで返す
     def calc_movement_distance(self):
@@ -119,6 +121,28 @@ class App:
         plt.xlabel('frame index')
         plt.xlabel('movement distance')
         plt.savefig('figure.png')
+    
+    # 外れ値を除いて平均値を求める処理
+    def outlier_iqr(self):
+        for item in self.movement_distance_per_frame:
+            if len(item) != 0:
+                s = pd.Series(item)
+                # 四分位数
+                q1 = s.describe()['25%']
+                q3 = s.describe()['75%']
+                iqr = q3 - q1 #四分位範囲
+                # 外れ値の基準点
+                outlier_min = q1 - (iqr) * 1.5
+                outlier_max = q3 + (iqr) * 1.5
+                # 範囲から外れている値を除く
+                s = s.clip(outlier_min, outlier_max)
+                self.mean_movement_distance_per_frame.append(s.mean())
+            else:
+                self.mean_movement_distance_per_frame.append(0)
+    
+    # 切りだすフレームのインデックスを求める処理
+
+    # 切り出した画像を結合する処理
 
 def main():
     print('Start')
@@ -131,7 +155,7 @@ def main():
     app = App(video_src)
     movement_distance_per_frame = app.calc_movement_distance()
     app.show_movement_distance_per_frame()
-
+    app.outlier_iqr()
     print('Done')
 
 
